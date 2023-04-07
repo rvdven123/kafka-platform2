@@ -1,0 +1,42 @@
+# To use the KafkaConnector resource, you have to first enable the connector operator using
+# the strimzi.io/use-connector-resources annotation on the KafkaConnect custom resource.
+# From Apache Kafka 3.1.1 and 3.2.0, you also have to add the FileStreamSourceConnector
+# connector to the container image. You can do that using the kafka-connect-build.yaml example.
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnector
+metadata:
+  name: debezium-mysql-source
+  labels:
+    # The strimzi.io/cluster label identifies the KafkaConnect instance
+    # in which to create this connector. That KafkaConnect instance
+    # must have the strimzi.io/use-connector-resources annotation
+    # set to true.
+    strimzi.io/cluster: my-connect-cluster
+spec:
+  class: io.debezium.connector.mysql.MySqlConnector
+  tasksMax: 1
+  autoRestart:
+    enabled: true
+  config:
+#    key.converter: org.apache.kafka.connect.json.JsonConverter,
+#    value.converter: org.apache.kafka.connect.json.JsonConverter,
+#    key.converter.schemas.enable: true,
+#    value.converter.schemas.enable: true,
+    database.hostname: mysql
+    database.port: 3306
+    database.user: root
+    database.password: M6sW3XIE12
+    database.server.id: 223344
+    database.server.name: dbserver1
+    database.history.kafka.topic: students-schema
+    database.include.list: test
+    database.whitelist: test
+    table.whitelist: test.students
+    topic.prefix: ron
+    schema.history.internal.kafka.topic: schema-history
+    schema.history.internal.kafka.bootstrap.servers: my-cdc-cluster-kafka-bootstrap:9092
+    #message.key.columns: test.students:id
+    transforms: route
+    transforms.route.type: org.apache.kafka.connect.transforms.RegexRouter
+    transforms.route.regex: ([^.]+)\\.([^.]+)\\.([^.]+)
+    transforms.route.replacement: $3

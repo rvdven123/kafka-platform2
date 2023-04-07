@@ -1,0 +1,43 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnect
+metadata:
+  name: my-connect-cluster
+  annotations:
+#  # use-connector-resources configures this KafkaConnect
+#  # to use KafkaConnector resources to avoid
+#  # needing to call the Connect REST API directly
+    strimzi.io/use-connector-resources: "true"
+spec:
+  version: 3.3.2
+  image: localhost:5000/kafka-connect-art-systeem:1.0
+  replicas: 1
+  bootstrapServers: my-cdc-cluster-kafka-bootstrap:9093
+  tls:
+    trustedCertificates:
+      - secretName: my-cdc-cluster-cluster-ca-cert
+        certificate: ca.crt
+  logging:
+    type: inline
+    loggers:
+      log4j.logger.io.debezium.connector.mysql: "DEBUG, stdout"
+  config:
+    group.id: connect-cluster
+    offset.storage.topic: connect-cluster-offsets
+    config.storage.topic: connect-cluster-configs
+    status.storage.topic: connect-cluster-status
+#    key.converter: org.apache.kafka.connect.json.JsonConverter,
+#    value.converter: org.apache.kafka.connect.json.JsonConverter,
+#    key.converter.schemas.enable: true,
+#    value.converter.schemas.enable: true,
+    key.converter: io.confluent.connect.avro.AvroConverter
+    key.converter.schema.registry.url: http://schema-registry-cp-schema-registry:8081
+    value.converter: io.confluent.connect.avro.AvroConverter
+    value.converter.schema.registry.url: http://schema-registry-cp-schema-registry:8081
+#    internal.key.converter: org.apache.kafka.connect.json.JsonConverter,
+#    internal.value.converter: org.apache.kafka.connect.json.JsonConverter,
+#    internal.key.converter.schemas.enable: false,
+#    internal.value.converter.schemas.enable: false,
+    # -1 means it will use the default replication factor configured in the broker
+    config.storage.replication.factor: -1
+    offset.storage.replication.factor: -1
+    status.storage.replication.factor: -1
